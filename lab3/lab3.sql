@@ -11,7 +11,9 @@ as $$
 $$;
 
 -- Подставляемая табличная
-create function get_younger(int) returns actors 
+drop function get_younger(int);
+create function get_younger(int) 
+returns setof actors 
 language sql
 as $$
     select *
@@ -19,19 +21,18 @@ as $$
     where age < $1;
 $$;
 
-
-/*
-create function get_younger(int) returns table(actor_id int) 
-language sql
-as $$
-    select actor_id
-    from actors
-    where age < $1;
-$$;
-*/
+select * from get_younger(20);
 
 -- Многооператорная табличная
-create function get_younger_all(int)
+
+drop table if exists age_actors;
+create table age_actors (
+    name varchar(40),
+    sex varchar(6),
+    age int
+);
+
+create or replace function get_with_this_age(int)
 returns table
 (
     actor_name varchar(40),
@@ -40,11 +41,18 @@ returns table
 )
 language sql
 as $$
+    insert into age_actors
     select actor_name, sex, age
     from actors
-    where age < $1;
+    where age = $1;
+
+    update age_actors
+    set age = age * 2;
+
+    select * from age_actors;
 $$;
 
+select * from get_with_this_age(20);
 -- Рекурсивную функцию или функцию с рекурсивным ОТВ
 create function pow(x int, grade int)
 returns int
@@ -58,6 +66,29 @@ begin
 	end if;
 end $$; 
  
+
+drop function if exists get_actors_in_interval;
+create function get_actors_in_interval(cur_id int, end_id int)
+returns table
+(
+    id_of_actor int,
+    name_of_actor varchar(40)
+)
+language plpgsql
+as $$
+begin
+	return query select actor_id, actor_name
+	from actors
+	where actor_id = cur_id;
+	
+	if cur_id < end_id then
+	return query select *
+	from get_actors_in_interval(cur_id + 1, end_id);
+	end if;	
+end;
+$$;
+
+select * from get_actors_in_interval(10, 20);
 
 -- Четыре хранимые процедуры
 
@@ -196,7 +227,7 @@ returns trigger
 language plpgsql
 as $$
 begin
-    raise notice 'CANNOT DELETE KID. KID WANT TO LIVE';
+    raise notice 'CANNOT DELETE KID. KID WANTS TO LIVE';
     return new;
 end;
 $$;
