@@ -2,7 +2,7 @@
 select * from <имя функции>
 
 -- Скалярная функция
-create function skalar_func() returns int
+create or replace function skalar_func() returns int
 language sql
 as $$ 
     select age
@@ -53,8 +53,9 @@ as $$
 $$;
 
 select * from get_with_this_age(20);
+
 -- Рекурсивную функцию или функцию с рекурсивным ОТВ
-create function pow(x int, grade int)
+create or replace function pow(x int, grade int)
 returns int
 language plpgsql
 as $$
@@ -67,8 +68,7 @@ begin
 end $$; 
  
 
-drop function if exists get_actors_in_interval;
-create function get_actors_in_interval(cur_id int, end_id int)
+create function or replace get_actors_in_interval(cur_id int, end_id int)
 returns table
 (
     id_of_actor int,

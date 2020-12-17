@@ -90,9 +90,9 @@ order by actor_name
 --      результирующего набора данных инструкции SELECT.
 select actor_id, sex
 into temp a_temp
-from actors
+from actors;
 
-select * from a_temp
+select * from a_temp;
 --drop table a_temp
 
 -- 12. Инструкция SELECT, использующая вложенные коррелированные
@@ -219,23 +219,22 @@ with recursive add1(n) as
     select n+1 from add1
     where n < 10
 )
-select n from add1
+select n from add1;
 
 with recursive select_actors(actor_id, actor_name, film, film_name) as
 (
     select actor_id, actor_name, film, films.film_name
-    from actors join films in actors.film = films.film_id
+    from actors join films on actors.film = films.film_id
     where actor_id = 1
 
     union all
-    select (actor_id + 1), actor_name, film, film_name
+    select (actors.actor_id + 1), actors.actor_name, actors.film, films.film_name
     from actors join (
         select_actors join films on select_actors.film = films.film_id
     ) on actors.actor_id = select_actors.actor_id
-    where actor_id < 20
+    where actors.actor_id < 20
 )
 select * from select_actors;
-
 
 -- 24. Оконные функции. Использование конструкций MIN/MAX/AVG OVER()
 select actor_name, age, film,
@@ -244,7 +243,7 @@ select actor_name, age, film,
     avg(age) over (partition by film)
 from actors
 
--- 25. Оконные фнкции для устранения дублей
+-- 25. Оконные функции для устранения дублей
 select *
 from
 (
@@ -258,3 +257,111 @@ from
 ) as pc
 where countt = 1
 order by age
+
+---------------------------------------------------
+drop table affiliated_studios;
+
+create table affiliated_studios (
+	affiliated_id int primary key,
+	parent_id int references studios(studio_id),
+	film_id int references films(film_id),
+	name varchar(40)
+);
+
+select * from affiliated_studios;
+
+insert into affiliated_studios (affiliated_id, parent_id, film_id, name)
+values (1, 1, 1, 'Aff1');
+
+insert into affiliated_studios (affiliated_id, parent_id, film_id, name)
+values (2, 1, 2, 'Aff2');
+
+insert into affiliated_studios (affiliated_id, parent_id, film_id, name)
+values (3, 2, 3, 'Aff3');
+
+insert into affiliated_studios (affiliated_id, parent_id, film_id, name)
+values (4, 2, 4, 'Aff4');
+
+
+
+with recursive info_by_film(affiliated_id, film_id) as
+(
+    select *,
+    from films join affiliated_studios
+	on affiliated_studios.affiliated_id = film_id
+
+    union all
+    select affiliated_studios.parent_id, actors.actor_name, actors.film, films.film_name
+    from actors join 
+        info_by_film join films on info_by_film.film = films.film_id
+    
+)
+select * from select_actors;
+
+
+with recursive select_actors(actor_id, actor_name, film, film_name) as
+(
+    select actor_id, actor_name, film, films.film_name
+    from actors join films on actors.film = films.film_id
+    where actor_id = 1
+
+    union all
+    select (actors.actor_id + 1), actors.actor_name, actors.film, films.film_name
+    from actors join (
+        select_actors join films on select_actors.film = films.film_id
+    ) on actors.actor_id = select_actors.actor_id
+    where actors.actor_id < 20
+)
+select * from select_actors;
+
+-------------------------------
+alter table studios drop column parent;
+alter table studios add parent int;
+
+update studios
+set parent = null;
+
+select * from studios
+
+select * from films join studios
+on films.studio_id = studios.studio_id
+where studios.studio_id = 10
+
+update studios
+set parent = 2
+where studio_id = 1;
+--441 for studio_id 1
+--935 for studio_id 10
+update studios
+set parent = 3
+where studio_id = 2;
+
+update studios
+set parent = 4
+where studio_id = 3;
+
+update studios
+set parent = 5
+where studio_id = 4;
+
+update studios
+set parent = 20
+where studio_id = 10;
+
+update studios
+set parent = 30
+where studio_id = 20;
+
+with recursive info_by_film(id_studio, parent_id) as
+(
+    select studios.studio_id, studios.parent
+    from films join studios
+	on films.studio_id = studios.studio_id
+	where films.film_id = 935
+
+    union all
+    select studios.studio_id, studios.parent
+    from studios join info_by_film on info_by_film.parent_id = studios.studio_id 
+    where studios.parent is not NULL
+)
+select * from info_by_film;
