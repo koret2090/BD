@@ -106,7 +106,6 @@ def scalar_function():
 ##########################################
 
 # 6. Вызвать многооператорную или табличную функцию
-# select * from get_players(219);
 
 def table_func():
     cursor = conn.cursor()
@@ -120,7 +119,6 @@ def table_func():
 
 
 # 7. Вызвать хранимую процедуру
-#Вызвать хранимую процедуру (написанную в третьей лабораторной работе)
 
 def stored_proc_func():
     cursor = conn.cursor()
